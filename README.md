@@ -3,7 +3,7 @@
 *Keep TWRP installed after an A/B OTA*
 
 ### Links
-* [GitHub](https://github.com/Magisk-Modules-Repo/TWRP-Keep)
+* [GitHub](https://github.com/Magisk-Modules-Repo/TWRP-A-B-Retention-Script)
 * [Support](https://forum.xda-developers.com/showthread.php?t=2239421)
 * [Donate](https://forum.xda-developers.com/donatetome.php?u=4544860)
 
