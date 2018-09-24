@@ -1,0 +1,132 @@
+#!/sbin/sh
+##########################################################################################
+#
+# Magisk Module Template Install Script
+# by topjohnwu
+#
+##########################################################################################
+
+# Detect whether in boot mode
+ps | grep zygote | grep -v grep >/dev/null && BOOTMODE=true || BOOTMODE=false
+$BOOTMODE || ps -A 2>/dev/null | grep zygote | grep -v grep >/dev/null && BOOTMODE=true
+
+TMPDIR=/dev/tmp
+INSTALLER=$TMPDIR/install
+MAGISKBIN=/data/adb/magisk
+
+# Default permissions
+umask 022
+
+# Initial cleanup
+rm -rf $TMPDIR 2>/dev/null
+mkdir -p $INSTALLER
+
+# echo before loading util_functions
+ui_print() { echo "$1"; }
+
+require_new_magisk() {
+  ui_print "*******************************"
+  ui_print " Please install Magisk v15.0+! "
+  ui_print "*******************************"
+  exit 1
+}
+
+##########################################################################################
+# Environment
+##########################################################################################
+
+OUTFD=$2
+ZIP=$3
+
+mount /data 2>/dev/null
+
+# Utility functions must exist
+[ -f $MAGISKBIN/util_functions.sh ] || require_new_magisk
+# Load utility fuctions
+. $MAGISKBIN/util_functions.sh
+
+# We can't alter magisk image live, use alternative image if required
+$BOOTMODE && IMG=/data/adb/magisk_merge.img
+# Always mount under tmp
+MOUNTPATH=$TMPDIR/magisk_img
+
+# Preperation for flashable zips
+get_outfd
+
+# Mount partitions
+mount_partitions
+
+# Detect version and architecture
+api_level_arch_detect
+
+# You can get the Android API version from $API, the CPU architecture from $ARCH
+# Useful if you are creating Android version / platform dependent mods
+
+# Setup busybox and binaries
+$BOOTMODE && boot_actions || recovery_actions
+
+##########################################################################################
+# Preparation
+##########################################################################################
+
+# Extract common files
+unzip -o "$ZIP" config.sh -d $INSTALLER >&2
+
+[ ! -f $INSTALLER/config.sh ] && abort "! Unable to extract zip file!"
+# Load configurations
+. $INSTALLER/config.sh
+
+# Check the installed magisk version
+MIN_VER=1500
+[ ! -z $MAGISK_VER_CODE -a $MAGISK_VER_CODE -ge $MIN_VER ] || require_new_magisk
+MODID=`grep_prop id $INSTALLER/module.prop`
+MODPATH=$MOUNTPATH/$MODID
+
+# Print mod name
+print_modname
+
+# Please leave this message in your flashable zip for credits :)
+ui_print "******************************"
+ui_print "Powered by Magisk (@topjohnwu)"
+ui_print "******************************"
+
+##########################################################################################
+# Install
+##########################################################################################
+
+find_boot_image
+
+[ -z $SLOT ] && abort "! Flashable on A/B slot devices only!"
+
+ui_print "- Unpacking boot$SLOT image"
+$MAGISKBIN/magiskboot --unpack "$BOOTIMAGE" || abort "! Unable to unpack boot image!"
+
+eval $BOOTSIGNER -verify < $BOOTIMAGE && BOOTSIGNED=true
+$BOOTSIGNED && ui_print "- Boot image is signed with AVB 1.0"
+
+$MAGISKBIN/magiskboot --cpio ramdisk.cpio "extract twres /dev/null" 2>/dev/null || abort "! TWRP ramdisk not found!"
+
+ui_print "- Backing up TWRP ramdisk"
+cp -f ramdisk.cpio ramdisk.cpio.orig
+$MAGISKBIN/magiskboot --cleanup
+
+find_alt_boot_image
+
+ui_print "- Unpacking boot$ALTSLOT image"
+$MAGISKBIN/magiskboot --unpack "$BOOTIMAGE" || abort "! Unable to unpack boot image!"
+
+eval $BOOTSIGNER -verify < $BOOTIMAGE && BOOTSIGNED=true
+$BOOTSIGNED && ui_print "- Boot image is signed with AVB 1.0"
+
+ui_print "- Replacing ramdisk with TWRP backup"
+mv -f ramdisk.cpio.orig ramdisk.cpio
+
+ui_print "- Repacking boot image"
+$MAGISKBIN/magiskboot --repack "$BOOTIMAGE" || abort "! Unable to repack boot image!"
+$MAGISKBIN/magiskboot --cleanup
+
+flash_boot_image new-boot.img "$BOOTIMAGE"
+rm -f new-boot.img
+
+rm -rf $TMPDIR
+exit 0
