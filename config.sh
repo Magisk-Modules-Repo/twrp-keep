@@ -46,3 +46,5 @@ find_alt_boot_image() {
     BOOTIMAGE=`grep -v '#' /etc/*fstab* | grep -E '/boot[^a-zA-Z]' | grep -oE '/dev/[a-zA-Z0-9_./-]*' | head -n 1`
   fi
 }
+
+type flash_boot_image >/dev/null || flash_boot_image() { flash_image "$@"; }
