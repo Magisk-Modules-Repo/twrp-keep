@@ -48,3 +48,5 @@ find_alt_boot_image() {
 }
 
 type flash_boot_image >/dev/null || flash_boot_image() { flash_image "$@"; }
+
+[ -z $APK ] && APK=/data/app/com.topjohnwu.magisk-*/base.apk
