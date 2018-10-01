@@ -10,4 +10,6 @@
 ### Description
 **This is NOT a normal module - it will NOT show up in Magisk Manager's installed modules list.**
 
-Flash this script zip after the OTA has installed, and before you install Magisk to Inactive Slot from Manager
+Flash this script zip after each OTA has installed, but before you install Magisk to Inactive Slot from Manager
+
+Initial install should be from the Downloads section in Manager, then subsequent flashes can be from the Modules section using the + button and selecting the downloaded zip from internal storage
