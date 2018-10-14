@@ -28,8 +28,6 @@ print_modname() {
 # difficult for you to migrate your modules to newer template versions.
 # Make update-binary as clean as possible, try to only do function calls in it.
 
-[ $BOOTMODE ] || abort "*** Flashable manually from Magisk Manager only! ***"
-
 find_alt_boot_image() {
   BOOTIMAGE=
   case $SLOT in
@@ -51,5 +49,10 @@ type flash_boot_image >/dev/null || flash_boot_image() { flash_image "$@"; }
 
 [ -z $APK ] && APK=/data/adb/magisk.apk
 [ -f $APK ] || APK=/data/magisk/magisk.apk
-[ -f $APK ] || APK=/data/app/$(strings /data/adb/magisk.db | grep 5requestor | cut -c11-)*/*.apk
-[ -f $APK ] || APK=/data/app/com.topjohnwu.magisk*/*.apk
+[ -f $APK ] || APK=$(echo /data/app/$(strings /data/adb/magisk.db | grep 5requestor | cut -c11-)*/*.apk)
+[ -f $APK ] || APK=$(echo /data/app/com.topjohnwu.magisk*/*.apk)
+
+PACKAGE=${APK##*/}
+PACKAGE=${APK%.apk}
+
+echo $ZIP | grep "^/data" | grep $PACKAGE >/dev/null || abort "*** Flashable manually from Magisk Manager only! ***"
