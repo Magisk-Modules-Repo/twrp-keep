@@ -28,7 +28,7 @@ print_modname() {
 # difficult for you to migrate your modules to newer template versions.
 # Make update-binary as clean as possible, try to only do function calls in it.
 
-[ $BOOTMODE ] || abort "*** Flashable manually from Magisk Manager only! ***"
+$BOOTMODE || abort "*** Flashable manually from Magisk Manager only! ***"
 
 find_alt_boot_image() {
   BOOTIMAGE=
