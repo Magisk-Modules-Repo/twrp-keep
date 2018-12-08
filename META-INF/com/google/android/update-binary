@@ -105,7 +105,7 @@ $MAGISKBIN/magiskboot --unpack "$BOOTIMAGE" || abort "! Unable to unpack boot im
 eval $BOOTSIGNER -verify < $BOOTIMAGE && BOOTSIGNED=true
 $BOOTSIGNED && ui_print "- Boot image is signed with AVB 1.0"
 
-$MAGISKBIN/magiskboot --cpio ramdisk.cpio "extract twres /dev/null" 2>/dev/null || abort "! TWRP ramdisk not found!"
+$MAGISKBIN/magiskboot --cpio ramdisk.cpio "extract twres $TMPDIR" 2>/dev/null || abort "! TWRP ramdisk not found!"
 
 ui_print "- Backing up TWRP ramdisk"
 cp -f ramdisk.cpio ramdisk.cpio.orig
