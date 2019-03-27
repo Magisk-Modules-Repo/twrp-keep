@@ -1,35 +1,28 @@
 #!/sbin/sh
-##########################################################################################
-#
-# Magisk Module Template Install Script
-# by topjohnwu
-#
-##########################################################################################
-
-# Detect whether in boot mode
-[ -z $BOOTMODE ] && BOOTMODE=false
-$BOOTMODE || ps | grep zygote | grep -v grep >/dev/null && BOOTMODE=true
-$BOOTMODE || ps -A 2>/dev/null | grep zygote | grep -v grep >/dev/null && BOOTMODE=true
 
 TMPDIR=/dev/tmp
-INSTALLER=$TMPDIR/install
-MAGISKBIN=/data/adb/magisk
+MOUNTPATH=/dev/magisk_img
 
 # Default permissions
 umask 022
 
 # Initial cleanup
 rm -rf $TMPDIR 2>/dev/null
-mkdir -p $INSTALLER
+mkdir -p $TMPDIR
 
 # echo before loading util_functions
 ui_print() { echo "$1"; }
 
 require_new_magisk() {
-  ui_print "*******************************"
-  ui_print " Please install Magisk v15.0+! "
-  ui_print "*******************************"
+  ui_print "***********************************"
+  ui_print " Please install the latest Magisk! "
+  ui_print "***********************************"
   exit 1
+}
+
+imageless_magisk() {
+  [ $MAGISK_VER_CODE -gt 18100 ]
+  return $?
 }
 
 ##########################################################################################
@@ -37,31 +30,26 @@ require_new_magisk() {
 ##########################################################################################
 
 OUTFD=$2
-ZIP=$3
+ZIPFILE=$3
 
 mount /data 2>/dev/null
 
-# Utility functions must exist
-[ -f $MAGISKBIN/util_functions.sh ] || require_new_magisk
-# Load utility fuctions
-. $MAGISKBIN/util_functions.sh
-
-# We can't alter magisk image live, use alternative image if required
-$BOOTMODE && IMG=/data/adb/magisk_merge.img
-# Always mount under tmp
-MOUNTPATH=$TMPDIR/magisk_img
+# Load utility functions
+if [ -f /data/adb/magisk/util_functions.sh ]; then
+  . /data/adb/magisk/util_functions.sh
+  NVBASE=/data/adb
+else
+  require_new_magisk
+fi
 
 # Preperation for flashable zips
-get_outfd
+setup_flashable
 
 # Mount partitions
 mount_partitions
 
 # Detect version and architecture
 api_level_arch_detect
-
-# You can get the Android API version from $API, the CPU architecture from $ARCH
-# Useful if you are creating Android version / platform dependent mods
 
 # Setup busybox and binaries
 $BOOTMODE && boot_actions || recovery_actions
@@ -71,22 +59,28 @@ $BOOTMODE && boot_actions || recovery_actions
 ##########################################################################################
 
 # Extract common files
-unzip -o "$ZIP" config.sh -d $INSTALLER >&2
+unzip -oj "$ZIPFILE" module.prop install.sh uninstall.sh 'common/*' -d $TMPDIR >&2
 
-[ ! -f $INSTALLER/config.sh ] && abort "! Unable to extract zip file!"
-# Load configurations
-. $INSTALLER/config.sh
+[ ! -f $TMPDIR/install.sh ] && abort "! Unable to extract zip file!"
+# Load install script
+. $TMPDIR/install.sh
 
-# Check the installed magisk version
-MIN_VER=1500
-[ ! -z $MAGISK_VER_CODE -a $MAGISK_VER_CODE -ge $MIN_VER ] || require_new_magisk
-MODID=`grep_prop id $INSTALLER/module.prop`
-MODPATH=$MOUNTPATH/$MODID
+if imageless_magisk; then
+  $BOOTMODE && MODDIRNAME=modules_update || MODDIRNAME=modules
+  MODULEROOT=$NVBASE/$MODDIRNAME
+else
+  $BOOTMODE && IMGNAME=magisk_merge.img || IMGNAME=magisk.img
+  IMG=$NVBASE/$IMGNAME
+  request_zip_size_check "$ZIPFILE"
+  mount_magisk_img
+  MODULEROOT=$MOUNTPATH
+fi
 
-# Print mod name
+MODID=`grep_prop id $TMPDIR/module.prop`
+MODPATH=$MODULEROOT/$MODID
+
 print_modname
 
-# Please leave this message in your flashable zip for credits :)
 ui_print "******************************"
 ui_print "Powered by Magisk (@topjohnwu)"
 ui_print "******************************"
@@ -95,39 +89,58 @@ ui_print "******************************"
 # Install
 ##########################################################################################
 
-find_boot_image
+# Create mod paths
+rm -rf $MODPATH 2>/dev/null
+mkdir -p $MODPATH
 
-[ -z $SLOT ] && abort "! Flashable on A/B slot devices only!"
+# Remove placeholder
+rm -f $MODPATH/system/placeholder 2>/dev/null
 
-ui_print "- Unpacking boot$SLOT image"
-$MAGISKBIN/magiskboot --unpack "$BOOTIMAGE" || abort "! Unable to unpack boot image!"
+# Custom uninstaller
+[ -f $TMPDIR/uninstall.sh ] && cp -af $TMPDIR/uninstall.sh $MODPATH/uninstall.sh
 
-eval $BOOTSIGNER -verify < $BOOTIMAGE && BOOTSIGNED=true
-$BOOTSIGNED && ui_print "- Boot image is signed with AVB 1.0"
+# Auto Mount
+if imageless_magisk; then
+  $SKIPMOUNT && touch $MODPATH/skip_mount
+else
+  $SKIPMOUNT || touch $MODPATH/auto_mount
+fi
 
-$MAGISKBIN/magiskboot --cpio ramdisk.cpio "extract twres $TMPDIR" 2>/dev/null || abort "! TWRP ramdisk not found!"
+# prop files
+$PROPFILE && cp -af $TMPDIR/system.prop $MODPATH/system.prop
 
-ui_print "- Backing up TWRP ramdisk"
-cp -f ramdisk.cpio ramdisk.cpio.orig
-$MAGISKBIN/magiskboot --cleanup
+# Module info
+cp -af $TMPDIR/module.prop $MODPATH/module.prop
+if $BOOTMODE; then
+  # Update info for Magisk Manager
+  mktouch $NVBASE/modules/$MODID/update
+  cp -af $TMPDIR/module.prop $NVBASE/modules/$MODID/module.prop
+fi
 
-find_alt_boot_image
+# post-fs-data mode scripts
+$POSTFSDATA && cp -af $TMPDIR/post-fs-data.sh $MODPATH/post-fs-data.sh
 
-ui_print "- Unpacking boot$ALTSLOT image"
-$MAGISKBIN/magiskboot --unpack "$BOOTIMAGE" || abort "! Unable to unpack boot image!"
+# service mode scripts
+$LATESTARTSERVICE && cp -af $TMPDIR/service.sh $MODPATH/service.sh
 
-eval $BOOTSIGNER -verify < $BOOTIMAGE && BOOTSIGNED=true
-$BOOTSIGNED && ui_print "- Boot image is signed with AVB 1.0"
+on_install
 
-ui_print "- Replacing ramdisk with TWRP backup"
-mv -f ramdisk.cpio.orig ramdisk.cpio
+# Handle replace folders
+for TARGET in $REPLACE; do
+  mktouch $MODPATH$TARGET/.replace
+done
 
-ui_print "- Repacking boot image"
-$MAGISKBIN/magiskboot --repack "$BOOTIMAGE" || abort "! Unable to repack boot image!"
-$MAGISKBIN/magiskboot --cleanup
+ui_print "- Setting permissions"
+set_permissions
 
-flash_boot_image new-boot.img "$BOOTIMAGE"
-rm -f new-boot.img
+##########################################################################################
+# Finalizing
+##########################################################################################
 
-rm -rf $TMPDIR
+cd /
+imageless_magisk || unmount_magisk_img
+$BOOTMODE || recovery_cleanup
+rm -rf $TMPDIR $MOUNTPATH
+
+ui_print "- Done"
 exit 0
