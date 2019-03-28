@@ -21,7 +21,7 @@ print_modname() {
 # Custom Functions
 ##########################################################################################
 
-type flash_boot_image >/dev/null 2>&1 || flash_boot_image() { flash_image "$@"; }
+type flash_image >/dev/null 2>&1 || flash_image() { flash_boot_image "$@"; }
 
 type find_manager_apk >/dev/null 2>&1 || find_manager_apk() {
   [ -z $APK ] && APK=/data/adb/magisk.apk
@@ -84,7 +84,7 @@ $MAGISKBIN/magiskboot --repack "$BOOTIMAGE" || abort "! Unable to repack boot im
 
 $MAGISKBIN/magiskboot --cleanup
 
-flash_boot_image new-boot.img "$BOOTIMAGE"
+flash_image new-boot.img "$BOOTIMAGE"
 
 rm -rf $TMPDIR new-boot.img
 
