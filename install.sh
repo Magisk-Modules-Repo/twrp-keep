@@ -59,6 +59,10 @@ ui_print "******************************"
 # resolve APK for BOOTSIGNER functionality
 find_manager_apk
 
+# we need RECOVERYMODE resolved for find_boot_image()
+getvar RECOVERYMODE
+[ -z $RECOVERYMODE ] && RECOVERYMODE=false
+
 unpack_slot
 
 $MAGISKBIN/magiskboot --cpio ramdisk.cpio "extract twres $TMPDIR" 2>/dev/null || abort "! TWRP ramdisk not found"
