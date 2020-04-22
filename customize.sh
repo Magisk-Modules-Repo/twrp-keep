@@ -1,26 +1,3 @@
-##########################################################################################
-#
-# Magisk Module Installer Script
-#
-##########################################################################################
-
-##########################################################################################
-# Installation Message
-##########################################################################################
-
-# Set what you want to display when installing your module
-
-print_modname() {
-  ui_print "*******************************"
-  ui_print "   TWRP A/B Retention Script   "
-  ui_print "  by osm0sis @ xda-developers  "
-  ui_print "*******************************"
-}
-
-##########################################################################################
-# Custom Functions
-##########################################################################################
-
 type flash_image >/dev/null 2>&1 || flash_image() { flash_boot_image "$@"; }
 
 type find_manager_apk >/dev/null 2>&1 || find_manager_apk() {
@@ -46,18 +23,7 @@ unpack_slot() {
   $BOOTSIGNED && ui_print "- Boot image is signed with AVB 1.0"
 }
 
-##########################################################################################
-# Install
-##########################################################################################
-
 $BOOTMODE || abort "*** Flashable manually from Magisk Manager only! ***"
-
-print_modname
-
-# leave this message for credit since we hijack the rest of the install from the backend ;)
-ui_print "******************************"
-ui_print "Powered by Magisk (@topjohnwu)"
-ui_print "******************************"
 
 # current SLOT should already be set by mount_partitions() in module backend
 [ -z $SLOT ] && abort "! Flashable on A/B slot devices only"
@@ -96,7 +62,8 @@ $MAGISKBIN/magiskboot --cleanup
 
 flash_image new-boot.img "$BOOTIMAGE"
 
-rm -rf $TMPDIR new-boot.img
+rm -rf $TMPDIR $MODPATH new-boot.img
 
 ui_print "- Done"
 exit 0
+
