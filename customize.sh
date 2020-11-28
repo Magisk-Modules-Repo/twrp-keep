@@ -16,11 +16,11 @@ type find_manager_apk >/dev/null 2>&1 || find_manager_apk() {
 unpack_slot() {
   find_boot_image
 
-  ui_print "- Unpacking boot$SLOT image"
-  $MAGISKBIN/magiskboot --unpack "$BOOTIMAGE" || abort "! Unable to unpack boot image"
+  ui_print "- Unpacking $(basename $BOOTIMAGE) image"
+  $MAGISKBIN/magiskboot --unpack "$BOOTIMAGE" || abort "! Unable to unpack image"
 
   eval $BOOTSIGNER -verify < $BOOTIMAGE && BOOTSIGNED=true
-  $BOOTSIGNED && ui_print "- Boot image is signed with AVB 1.0"
+  $BOOTSIGNED && ui_print "- Image is signed with AVB 1.0"
 }
 
 $BOOTMODE || abort "*** Flashable manually from Magisk Manager only! ***"
@@ -33,14 +33,20 @@ find_manager_apk
 
 # we need RECOVERYMODE resolved for find_boot_image()
 getvar RECOVERYMODE
+find_block recovery$SLOT >/dev/null 2>&1 && RECOVERYMODE=true
 [ -z $RECOVERYMODE ] && RECOVERYMODE=false
 
 unpack_slot
 
 $MAGISKBIN/magiskboot --cpio ramdisk.cpio "extract twres $TMPDIR" 2>/dev/null || abort "! TWRP ramdisk not found"
 
-ui_print "- Backing up TWRP ramdisk"
-cp -f ramdisk.cpio ramdisk.cpio.orig
+if $RECOVERYMODE; then
+  ui_print "- Backing up TWRP image"
+  dd if="$BOOTIMAGE" of=new-boot.img bs=1048576
+else
+  ui_print "- Backing up TWRP ramdisk"
+  cp -f ramdisk.cpio ramdisk.cpio.orig
+fi
 
 $MAGISKBIN/magiskboot --cleanup
 
@@ -50,15 +56,24 @@ case $SLOT in
   _b) SLOT=_a;;
 esac
 
-unpack_slot
+if $RECOVERYMODE; then
+  find_boot_image
 
-ui_print "- Replacing ramdisk with TWRP backup"
-mv -f ramdisk.cpio.orig ramdisk.cpio
+  eval $BOOTSIGNER -verify < $BOOTIMAGE && BOOTSIGNED=true
+  $BOOTSIGNED && ui_print "- Image is signed with AVB 1.0"
 
-ui_print "- Repacking boot image"
-$MAGISKBIN/magiskboot --repack "$BOOTIMAGE" || abort "! Unable to repack boot image"
+  ui_print "- Replacing recovery$SLOT with TWRP backup"
+else
+  unpack_slot
 
-$MAGISKBIN/magiskboot --cleanup
+  ui_print "- Replacing ramdisk with TWRP backup"
+  mv -f ramdisk.cpio.orig ramdisk.cpio
+
+  ui_print "- Repacking boot image"
+  $MAGISKBIN/magiskboot --repack "$BOOTIMAGE" || abort "! Unable to repack image"
+
+  $MAGISKBIN/magiskboot --cleanup
+fi
 
 blockdev --setrw "$BOOTIMAGE"
 flash_image new-boot.img "$BOOTIMAGE"
