@@ -1,3 +1,5 @@
+SKIPUNZIP=1
+
 type flash_image >/dev/null 2>&1 || flash_image() { flash_boot_image "$@"; }
 
 type find_manager_apk >/dev/null 2>&1 || find_manager_apk() {
@@ -13,14 +15,23 @@ type find_manager_apk >/dev/null 2>&1 || find_manager_apk() {
   [ -f $APK ] || ui_print "! Unable to detect Magisk Manager APK"
 }
 
+bootsign_test() {
+  if [ -f $APK ]; then
+    eval $BOOTSIGNER -verify < $BOOTIMAGE && BOOTSIGNED=true
+    $BOOTSIGNED && ui_print "- Image is signed with AVB 1.0"
+  fi
+}
+
 unpack_slot() {
+  name=boot
+  $RECOVERYMODE && name=recovery
+
   find_boot_image
 
-  ui_print "- Unpacking $(basename $BOOTIMAGE) image"
+  ui_print "- Unpacking $name$SLOT image"
   $MAGISKBIN/magiskboot --unpack "$BOOTIMAGE" || abort "! Unable to unpack image"
 
-  eval $BOOTSIGNER -verify < $BOOTIMAGE && BOOTSIGNED=true
-  $BOOTSIGNED && ui_print "- Image is signed with AVB 1.0"
+  bootsign_test
 }
 
 # current SLOT should already be set by mount_partitions() in module backend
@@ -57,8 +68,7 @@ esac
 if $RECOVERYMODE; then
   find_boot_image
 
-  eval $BOOTSIGNER -verify < $BOOTIMAGE && BOOTSIGNED=true
-  $BOOTSIGNED && ui_print "- Image is signed with AVB 1.0"
+  bootsign_test
 
   ui_print "- Replacing recovery$SLOT with TWRP backup"
 else
@@ -76,6 +86,8 @@ fi
 blockdev --setrw "$BOOTIMAGE"
 flash_image new-boot.img "$BOOTIMAGE"
 
+cd /
+$BOOTMODE || recovery_cleanup
 rm -rf $TMPDIR $MODPATH new-boot.img
 
 ui_print "- Done"
