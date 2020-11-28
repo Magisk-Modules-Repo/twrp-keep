@@ -23,8 +23,6 @@ unpack_slot() {
   $BOOTSIGNED && ui_print "- Image is signed with AVB 1.0"
 }
 
-$BOOTMODE || abort "*** Flashable manually from Magisk Manager only! ***"
-
 # current SLOT should already be set by mount_partitions() in module backend
 [ -z $SLOT ] && abort "! Flashable on A/B slot devices only"
 
