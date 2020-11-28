@@ -60,6 +60,7 @@ $MAGISKBIN/magiskboot --repack "$BOOTIMAGE" || abort "! Unable to repack boot im
 
 $MAGISKBIN/magiskboot --cleanup
 
+blockdev --setrw "$BOOTIMAGE"
 flash_image new-boot.img "$BOOTIMAGE"
 
 rm -rf $TMPDIR $MODPATH new-boot.img
