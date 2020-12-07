@@ -84,7 +84,7 @@ else
   $MAGISKBIN/magiskboot --cleanup
 fi
 
-blockdev --setrw "$BOOTIMAGE"
+blockdev --setrw "$BOOTIMAGE" 2>/dev/null
 flash_image new-boot.img "$BOOTIMAGE"
 
 cd /
