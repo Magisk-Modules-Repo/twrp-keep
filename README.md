@@ -6,7 +6,7 @@
 * [GitHub](https://github.com/Magisk-Modules-Repo/TWRP-A-B-Retention-Script)
 * [Support](https://forum.xda-developers.com/showthread.php?t=2239421)
 * [Sponsor](https://github.com/sponsors/osm0sis)
-* [Donate](https://forum.xda-developers.com/donatetome.php?u=4544860)
+* [Donate](https://www.paypal.me/osm0sis)
 
 ### Description
 **This is NOT a normal module - it will NOT show up in Magisk Manager's installed modules list.**

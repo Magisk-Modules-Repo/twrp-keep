@@ -5,5 +5,5 @@ versionCode=1
 author=osm0sis @ xda-developers
 description=Keep TWRP installed after an A/B OTA - Flash this after each OTA has installed, but before you install Magisk to Inactive Slot from Manager
 support=https://forum.xda-developers.com/showthread.php?t=2239421
-donate=https://forum.xda-developers.com/donatetome.php?u=4544860
+donate=https://www.paypal.me/osm0sis
 minMagisk=1500
