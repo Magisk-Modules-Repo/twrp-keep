@@ -46,6 +46,12 @@ getvar RECOVERYMODE
 find_block recovery$SLOT >/dev/null 2>&1 && RECOVERYMODE=true
 [ -z $RECOVERYMODE ] && RECOVERYMODE=false
 
+# ensure we're in a working scratch directory
+[ -z $TMPDIR ] && TMPDIR=/dev/tmp
+rm -rf $TMPDIR
+mkdir -p $TMPDIR
+cd $TMPDIR
+
 unpack_slot
 
 $MAGISKBIN/magiskboot --cpio ramdisk.cpio "extract twres $TMPDIR" 2>/dev/null || abort "! TWRP ramdisk not found"
