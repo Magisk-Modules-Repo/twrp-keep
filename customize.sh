@@ -2,6 +2,7 @@ SKIPUNZIP=1
 
 type flash_image >/dev/null 2>&1 || flash_image() { flash_boot_image "$@"; }
 
+type find_magisk_apk >/dev/null 2>&1 || find_magisk_apk() { find_manager_apk; }
 type find_manager_apk >/dev/null 2>&1 || find_manager_apk() {
   local DBAPK
   [ -z $APK ] && APK=/data/adb/magisk.apk
@@ -13,7 +14,7 @@ type find_manager_apk >/dev/null 2>&1 || find_manager_apk() {
     [ -z $DBAPK ] || APK=/data/user_de/*/$DBAPK/dyn/*.apk
     [ -f $APK ] || [ -z $DBAPK ] || APK=/data/app/$DBAPK*/*.apk
   fi
-  [ -f $APK ] || ui_print "! Unable to detect Magisk Manager APK for BootSigner"
+  [ -f $APK ] || ui_print "! Unable to detect Magisk app APK for BootSigner"
 }
 
 bootsign_test() {
@@ -39,7 +40,7 @@ unpack_slot() {
 [ -z $SLOT ] && abort "! Flashable on A/B slot devices only"
 
 # resolve APK for BOOTSIGNER functionality
-find_manager_apk
+find_magisk_apk
 
 # we need RECOVERYMODE resolved for find_boot_image()
 getvar RECOVERYMODE
