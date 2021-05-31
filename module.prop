@@ -3,7 +3,7 @@ name=TWRP A/B Retention Script
 version=Magisk
 versionCode=1
 author=osm0sis @ xda-developers
-description=Keep TWRP installed after an A/B OTA - Flash this after each OTA has installed, but before you install Magisk to Inactive Slot from Manager
+description=Keep TWRP installed after an A/B OTA - Flash this after each OTA has installed, but before you install Magisk to Inactive Slot from the Magisk app
 support=https://forum.xda-developers.com/showthread.php?t=2239421
 donate=https://www.paypal.me/osm0sis
 minMagisk=1500
