@@ -5,13 +5,13 @@ type flash_image >/dev/null 2>&1 || flash_image() { flash_boot_image "$@"; }
 type find_magisk_apk >/dev/null 2>&1 || find_magisk_apk() { find_manager_apk; }
 type find_manager_apk >/dev/null 2>&1 || find_manager_apk() {
   local DBAPK
-  [ -z $APK ] && APK=/data/adb/magisk.apk
-  [ -f $APK ] || APK=/data/magisk/magisk.apk
+  [ -z $APK ] && APK=$NVBASE/magisk.apk
+  [ -f $APK ] || APK=$MAGISKBIN/magisk.apk
   [ -f $APK ] || APK=/data/app/com.topjohnwu.magisk*/*.apk
   [ -f $APK ] || APK=/data/app/*/com.topjohnwu.magisk*/*.apk
   if [ ! -f $APK ]; then
     DBAPK=$(magisk --sqlite "SELECT value FROM strings WHERE key='requester'" 2>/dev/null | cut -d= -f2)
-    [ -z $DBAPK ] && DBAPK=$(strings /data/adb/magisk.db | grep -oE 'requester..*' | cut -c10-)
+    [ -z $DBAPK ] && DBAPK=$(strings $NVBASE/magisk.db | grep -oE 'requester..*' | cut -c10-)
     [ -z $DBAPK ] || APK=/data/user_de/*/$DBAPK/dyn/*.apk
     [ -f $APK ] || [ -z $DBAPK ] || APK=/data/app/$DBAPK*/*.apk
   fi
