@@ -48,8 +48,12 @@ getvar RECOVERYMODE
 find_block recovery$SLOT >/dev/null 2>&1 && RECOVERYMODE=true
 [ -z $RECOVERYMODE ] && RECOVERYMODE=false
 
-# ensure we're in a working scratch directory
+# copy over module files to allow future runs
 [ -z $TMPDIR ] && TMPDIR=/dev/tmp
+mkdir -p $NVBASE/modules/$MODID
+cp -af $TMPDIR/module.prop $NVBASE/modules/$MODID/module.prop 
+
+# ensure we're in a working scratch directory
 rm -rf $TMPDIR
 mkdir -p $TMPDIR
 cd $TMPDIR
@@ -98,7 +102,10 @@ flash_image new-boot.img "$BOOTIMAGE"
 cd /
 $BOOTMODE || recovery_cleanup
 rm -rf $TMPDIR $MODPATH new-boot.img
+rmdir -p $NVBASE/modules_update
 
 ui_print "- Done"
+ui_print " "
+print_title "DO NOT REBOOT NOW - SEE README FOR INSTRUCTIONS"
 exit 0
 
