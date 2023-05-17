@@ -66,6 +66,11 @@ if $RECOVERYMODE; then
   ui_print "- Backing up TWRP image"
   dd if="$BOOTIMAGE" of=new-boot.img bs=1048576
 else
+  $MAGISKBIN/magiskboot cpio ramdisk.cpio test
+  if [ $(($? & 3)) == 1 ]; then
+    ui_print "- Unrooting TWRP ramdisk"
+    $MAGISKBIN/magiskboot cpio ramdisk.cpio restore
+  fi
   ui_print "- Backing up TWRP ramdisk"
   cp -f ramdisk.cpio ramdisk.cpio.orig
 fi
