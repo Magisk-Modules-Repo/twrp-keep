@@ -3,8 +3,8 @@
 *Keep TWRP installed after an A/B OTA*
 
 ### Links
-* [GitHub](https://github.com/Magisk-Modules-Repo/TWRP-A-B-Retention-Script)
-* [Support](https://bit.do/osm0)
+* [GitHub](https://github.com/Magisk-Modules-Repo/twrp-keep)
+* [Support](https://is.gd/osm0_)
 * [Sponsor](https://github.com/sponsors/osm0sis)
 * [Donate](https://www.paypal.me/osm0sis)
 
