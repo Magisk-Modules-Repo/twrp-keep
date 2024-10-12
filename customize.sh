@@ -70,7 +70,12 @@ if $RECOVERYMODE; then
   dd if="$BOOTIMAGE" of=new-boot.img bs=1048576
 else
   $MAGISKBIN/magiskboot cpio ramdisk.cpio test
-  if [ $(($? & 3)) == 1 ]; then
+  PATCHED=$?
+
+  # support Magisk 27007+ but fallback to older bitwise check
+  $MAGISKBIN/magiskboot cpio --help 2>&1 | grep -q '0:stock' || PATCHED=$((PATCHED & 3))
+
+  if [ $PATCHED == 1 ]; then
     ui_print "- Unrooting TWRP ramdisk"
     $MAGISKBIN/magiskboot cpio ramdisk.cpio restore
   fi
