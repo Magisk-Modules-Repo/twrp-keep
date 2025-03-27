@@ -1,5 +1,7 @@
 SKIPUNZIP=1
 
+[ -z $NVBASE ] && NVBASE=/data/adb
+
 type flash_image >/dev/null 2>&1 || flash_image() { flash_boot_image "$@"; }
 
 if [ "$BOOTSIGNER" ]; then
